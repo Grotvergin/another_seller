@@ -6,7 +6,7 @@ def Main() -> None:
     data_cab = GetSector(SECTOR[0], SECTOR[1], SERVICE, SHEET_SERVICE, SHEET_ID)
     for cab in data_cab:
         Sleep(THR_DELTA, 0.5)
-        thread = Thread(target=ParallelThreads, args=(cab[1], ExtractSheetId(cab[0]), cab[2]))
+        thread = Thread(target=ParallelThreads, args=(cab[2], ExtractSheetId(cab[0]), cab[1]))
         thread.start()
         threads.append(thread)
     for thread in threads:

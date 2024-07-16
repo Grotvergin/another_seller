@@ -5,8 +5,8 @@ URL_CAMPAIGNS = 'https://advert-api.wb.ru/adv/v1/promotion/count'
 URL_STAT = 'https://advert-api.wb.ru/adv/v2/fullstats'
 SLEEP = 60
 THR_DELTA = 15
-PORTION = 100
-BEGIN = (datetime.now() - timedelta(days=28)).strftime('%Y-%m-%d')
+PORTION = 50
+BEGIN = (datetime.now() - timedelta(days=8)).strftime('%Y-%m-%d')
 SECTOR = ('B4', 'D5')
 UPLOAD_LCK = Lock()
 TYPES_AND_NAMES = {

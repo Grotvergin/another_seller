@@ -15,8 +15,6 @@ def Main() -> None:
 
 def ParallelThreads(heading: str, sheet_id: str, token: str):
     Stamp(f'Opened thread for {heading}', 'b')
-    with UPLOAD_LCK:
-        CleanSheet(len(COLUMNS), heading, sheet_id, SERVICE)
     campaigns = PrepareCampaigns(token)
     ProcessData(campaigns, heading, token, sheet_id, SERVICE)
     Stamp(f'Closed thread for {heading}', 'b')
@@ -28,11 +26,23 @@ def PrepareCampaigns(token: str) -> dict:
     for i in range(SmartLen(raw['adverts'])):
         for j in range(SmartLen(raw['adverts'][i]['advert_list'])):
             dict_of_campaigns[raw['adverts'][i]['advert_list'][j]['advertId']] = raw['adverts'][i]['type']
-    return dict_of_campaigns
+    dates = GetData(URL_DATE, token, list(dict_of_campaigns.keys()))
+    res_dict_for_dates = {}
+    for key, value in dict_of_campaigns.items():
+        for item in dates:
+            start_time = datetime.strptime(item['startTime'].rsplit('+', 1)[0], "%Y-%m-%dT%H:%M:%S.%f")
+            try:
+                end_time = datetime.strptime(item['endTime'].rsplit('+', 1)[0], "%Y-%m-%dT%H:%M:%S.%f")
+            except ValueError:
+                end_time = datetime.strptime(item['endTime'].rsplit('+', 1)[0], "%Y-%m-%dT%H:%M:%S")
+            req_time = datetime.strptime(DATE, '%Y-%m-%d')
+            if key == item['advertId'] and start_time < req_time < end_time:
+                res_dict_for_dates[key] = value
+    return res_dict_for_dates
 
 
 @ControlRecursion
-def GetData(url: str, token:str, body: list = None) -> dict:
+def GetData(url: str, token: str, body: list = None) -> dict:
     Stamp(f'Trying to connect {url}', 'i')
     try:
         if body is None:
@@ -59,12 +69,12 @@ def GetData(url: str, token:str, body: list = None) -> dict:
 
 
 def ProcessData(raw: dict, sheet_name: str, token: str, sheet_id: str, service: Resource) -> None:
-    row = 2
+    row = len(GetSector('A2', 'A40000', service, sheet_name, sheet_id)) + 2
     Stamp(f'For sheet {sheet_name} found {SmartLen(raw)} companies', 'i')
     for i in range(0, SmartLen(raw), PORTION):
         Stamp(f'Processing {PORTION} campaigns from {i} out of {SmartLen(raw)}', 'i')
         portion_of_campaigns = list(raw.keys())[i:i + PORTION]
-        list_for_request = [{'id': campaign, 'interval': {'begin': BEGIN, 'end': TODAY}} for campaign in portion_of_campaigns]
+        list_for_request = [{'id': campaign, 'interval': {'begin': DATE, 'end': DATE}} for campaign in portion_of_campaigns]
         data = GetData(URL_STAT, token, list_for_request)
         list_of_all = []
         for t in range(SmartLen(data)):
